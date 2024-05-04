@@ -6,8 +6,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Replace with the repository owner and name
-REPO_OWNER = "OWNER"
-REPO_NAME = "REPO_NAME"
+REPO_OWNER = "gabovailti"
+REPO_NAME = "credit-card-tokenisation-simulator"
 
 # Initialize the GitHub client
 g = Github(GITHUB_TOKEN)
