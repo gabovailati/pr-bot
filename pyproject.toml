@@ -8,10 +8,10 @@ package-mode = false
 
 [tool.poetry.dependencies]
 python = "^3.10"
-github = "^1.2.7"
 DateTime = "^5.5"
 python-dotenv = "^1.0.1"
 requests = "^2.31.0"
+pygithub = "^2.3.0"
 
 
 [build-system]
