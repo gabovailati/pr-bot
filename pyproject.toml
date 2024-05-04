@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "pr-bot"
+version = "0.1.0"
+description = ""
+authors = ["Gabriel Vailati <gabrielgvailati@gmail.com>"]
+readme = "README.md"
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.10"
+github = "^1.2.7"
+DateTime = "^5.5"
+python-dotenv = "^1.0.1"
+requests = "^2.31.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
