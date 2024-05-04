@@ -3,10 +3,12 @@ from github import Github
 from datetime import datetime, timedelta
 import requests
 from dotenv import load_dotenv
+
+# Load environment variables from the .env file
 load_dotenv()
 
 # Replace with the repository owner and name
-REPO_OWNER = "gabovailti"
+REPO_OWNER = "gabovailati"
 REPO_NAME = "credit-card-tokenisation-simulator"
 
 # Initialize the GitHub client
