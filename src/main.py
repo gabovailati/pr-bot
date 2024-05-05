@@ -2,10 +2,13 @@ import time
 from github import Github
 from datetime import datetime, timedelta
 import requests
+import os
 from dotenv import load_dotenv
+from groq import Groq
 
-# Load environment variables from the .env file
 load_dotenv()
+GITHUB_TOKEN = os.getenv('GITHUB_TOKEN')
+GROQ_API_KEY = os.getenv('GROQ_API_KEY')
 
 # Replace with the repository owner and name
 REPO_OWNER = "gabovailati"
@@ -16,20 +19,24 @@ g = Github(GITHUB_TOKEN)
 repo = g.get_repo(f"{REPO_OWNER}/{REPO_NAME}")
 
 # Set the initial last checked time to 24 hours ago
-last_checked = datetime.now() - timedelta(days=1)
+#last_checked = datetime.now() - timedelta(days=1)
 
+client = Groq(
+    api_key=GROQ_API_KEY
+)
 
 def prepare_review_prompt(files):
     """
     Prepare the prompt for the Groq AI code review.
     This is a placeholder function, you should customize it based on your needs.
     """
-    prompt = "Please review the following code changes and provide feedback:\n\n"
+    prompt = "Please perform a code review on the following changes and provide feedback. Below there are the GitHub changes. Be aware that lines starting with + are being added and the ones starting with - are being removed.\n\n---\n\n"
     for file in files:
         filename = file.filename
         patch = file.patch
         prompt += f"File: {filename}\n{patch}\n\n"
-    prompt += "Your review comments:"
+    prompt += "---"
+    print(prompt)
     return prompt
 
 def perform_code_review(files):
@@ -38,39 +45,40 @@ def perform_code_review(files):
     """
     review_prompt = prepare_review_prompt(files)
 
-    # Send the prompt to Groq AI and get the response
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {GROQ_API_KEY}",
-    }
-    data = {"prompt": review_prompt}
-    response = requests.post("https://api.groq.ai/v1/complete", headers=headers, json=data)
+    chat_completion = client.chat.completions.create(
+        messages=[
+            {
+                "role": "user",
+                "content": review_prompt,
+            }
+        ],
+        model="llama3-8b-8192",
+#        temperature=1,
+#        max_tokens=1024,
+#        top_p=1,
+#        stream=True,
+#        stop=None,
+    )
 
-    # Check if the request was successful
-    if response.status_code == 200:
-        # Extract the review comments from the response
-        review_comments = response.json()["result"]
+    review_comments = chat_completion.choices[0].message.content
+    review_comments = review_comments.split("\n")
 
-        # Parse and organize the review comments
-        # This is a placeholder, you should implement your own parsing logic
-        review_comments = review_comments.split("\n")
+    print(review_comments)
+    return review_comments
 
-        return review_comments
-    else:
-        print(f"Error: {response.status_code} - {response.text}")
-        return []
 
 def main():
-    global last_checked
+    pr_last_checked = {}  # Dictionary to store the last checked time for each PR
 
     while True:
         try:
             # Get open pull requests sorted by updated time
+            print(f"Looking for new PRs in {REPO_NAME}")            
             open_prs = repo.get_pulls(state="open", sort="updated")
 
             for pr in open_prs:
                 # Check if the PR is new or updated since the last check
-                if pr.updated_at > last_checked:
+                if pr.number not in pr_last_checked or pr.updated_at > pr_last_checked[pr.number]:
                     print(f"Reviewing PR #{pr.number}: {pr.title}")
 
                     # Get the changed files in the PR
@@ -87,8 +95,8 @@ def main():
                     else:
                         print(f"No issues found in PR #{pr.number}")
 
-                    # Update the last checked time
-                    last_checked = datetime.now()
+                    # Update the last checked time for this PR
+                    pr_last_checked[pr.number] = pr.updated_at
 
             # Sleep for 5 minutes before checking for new PRs again
             time.sleep(300)
